@@ -4,82 +4,72 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>To-Do App</title>
-
   <style>
-    /* Background */
     body {
-      background-color: skyblue;
       font-family: Arial, sans-serif;
+      background-color: skyblue;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
       margin: 0;
-      padding: 20px;
     }
 
-    /* Container */
     .container {
-      max-width: 600px;
-      margin: auto;
-      background: white;
+      background: #fff;
       padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+      width: 90%;
+      max-width: 500px;
     }
 
-    /* Heading */
-    .container h2 {
-      margin-bottom: 15px;
+    h2 {
+      margin-top: 0;
       text-align: center;
     }
 
-    /* Task Form */
-    .task-form {
+    .form {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      align-items: center;
       margin-bottom: 15px;
     }
 
-    .task-form input,
-    .task-form select {
+    .form input, 
+    .form select {
       flex: 1;
-      min-width: 120px;
       padding: 8px;
       border: 1px solid #ccc;
-      border-radius: 5px;
+      border-radius: 6px;
     }
 
-    .task-form button {
+    #addBtn {
       background-color: purple;
       color: white;
       border: none;
-      padding: 10px 15px;
-      border-radius: 5px;
+      padding: 8px 12px;
+      border-radius: 6px;
       cursor: pointer;
-      flex-shrink: 0;
     }
 
-    .task-form button:hover {
+    #addBtn:hover {
       background-color: darkviolet;
     }
 
-    /* Controls */
-    .controls {
+    .task-controls {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
-      gap: 10px;
+      margin-bottom: 10px;
     }
 
-    .controls input,
-    .controls select {
-      padding: 8px;
-      border-radius: 5px;
+    .task-controls input, .task-controls select {
+      padding: 6px;
+      border-radius: 6px;
       border: 1px solid #ccc;
     }
 
-    /* Task List */
     #taskList {
       list-style: none;
       padding: 0;
@@ -87,148 +77,123 @@
 
     #taskList li {
       background: #f9f9f9;
-      margin: 8px 0;
       padding: 10px;
-      border-radius: 5px;
+      margin: 6px 0;
+      border-radius: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    /* Buttons */
-    .edit-btn {
-      background: green;
+    button.edit {
+      background-color: green;
       color: white;
       border: none;
-      padding: 6px 10px;
-      margin-right: 5px;
-      border-radius: 4px;
+      padding: 5px 8px;
+      border-radius: 5px;
       cursor: pointer;
     }
 
-    .edit-btn:hover {
-      background: darkgreen;
-    }
-
-    .delete-btn {
-      background: red;
+    button.delete {
+      background-color: red;
       color: white;
       border: none;
-      padding: 6px 10px;
-      border-radius: 4px;
+      padding: 5px 8px;
+      border-radius: 5px;
       cursor: pointer;
-    }
-
-    .delete-btn:hover {
-      background: darkred;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>To-Do List</h2>
-
-    <!-- Task Form -->
-    <div class="task-form">
+    <div class="form">
       <input type="text" id="title" placeholder="Title">
       <input type="text" id="description" placeholder="Description">
+      <input type="date" id="taskDate">
       <select id="priority">
-        <option value="">Select priority</option>
+        <option value="" disabled selected>Priority</option>
         <option value="High">High</option>
         <option value="Medium">Medium</option>
         <option value="Low">Low</option>
       </select>
-      <button onclick="addTask()">Add Task</button>
+      <button id="addBtn">Add Task</button>
     </div>
 
-    <!-- Search + Filter -->
-    <div class="controls">
+    <div class="task-controls">
       <input type="text" id="search" placeholder="Search...">
-      <select id="filter" onchange="renderTasks()">
-        <option value="all">All</option>
+      <select id="filter">
+        <option value="All">All</option>
         <option value="High">High</option>
         <option value="Medium">Medium</option>
         <option value="Low">Low</option>
       </select>
-      <span id="count">0 Items</span>
+      <span id="taskCount">0 Items</span>
     </div>
 
-    <!-- Task List -->
     <ul id="taskList"></ul>
   </div>
 
   <script>
-    let tasks = [];
+    const taskList = document.getElementById("taskList");
+    const taskCount = document.getElementById("taskCount");
 
-    // Add Task
-    function addTask() {
+    document.getElementById("addBtn").addEventListener("click", function () {
       const title = document.getElementById("title").value;
       const description = document.getElementById("description").value;
+      const date = document.getElementById("taskDate").value;
       const priority = document.getElementById("priority").value;
 
-      if (title.trim() === "" || priority === "") {
-        alert("Please enter title and priority!");
-        return;
+      if (title && description && date && priority) {
+        const task = { title, description, date, priority };
+        addTaskToList(task);
+        updateCount();
+        clearFields();
+      } else {
+        alert("Please fill all fields");
       }
+    });
 
-      const task = {
-        id: Date.now(),
-        title,
-        description,
-        priority
-      };
+    function addTaskToList(task) {
+      const li = document.createElement("li");
 
-      tasks.push(task);
-      renderTasks();
+      li.innerHTML = `
+        <div>
+          <strong>${task.title}</strong> - ${task.description} 
+          <br><small>${task.date} | Priority: ${task.priority}</small>
+        </div>
+        <div>
+          <button class="edit">Edit</button>
+          <button class="delete">Delete</button>
+        </div>
+      `;
 
-      // Clear inputs
-      document.getElementById("title").value = "";
-      document.getElementById("description").value = "";
-      document.getElementById("priority").value = "";
-    }
-
-    // Render Tasks
-    function renderTasks() {
-      const search = document.getElementById("search").value.toLowerCase();
-      const filter = document.getElementById("filter").value;
-      const list = document.getElementById("taskList");
-      list.innerHTML = "";
-
-      let filteredTasks = tasks.filter(task =>
-        task.title.toLowerCase().includes(search) &&
-        (filter === "all" || task.priority === filter)
-      );
-
-      document.getElementById("count").textContent = filteredTasks.length + " Items";
-
-      filteredTasks.forEach(task => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-          <span><strong>${task.title}</strong> - ${task.description} (${task.priority})</span>
-          <span>
-            <button class="edit-btn" onclick="editTask(${task.id})">Edit</button>
-            <button class="delete-btn" onclick="deleteTask(${task.id})">Delete</button>
-          </span>
-        `;
-        list.appendChild(li);
+      li.querySelector(".delete").addEventListener("click", () => {
+        li.remove();
+        updateCount();
       });
-    }
 
-    // Edit Task
-    function editTask(id) {
-      const task = tasks.find(t => t.id === id);
-      if (task) {
+      li.querySelector(".edit").addEventListener("click", () => {
         document.getElementById("title").value = task.title;
         document.getElementById("description").value = task.description;
+        document.getElementById("taskDate").value = task.date;
         document.getElementById("priority").value = task.priority;
-        deleteTask(id);
-      }
+        li.remove();
+        updateCount();
+      });
+
+      taskList.appendChild(li);
     }
 
-    // Delete Task
-    function deleteTask(id) {
-      tasks = tasks.filter(t => t.id !== id);
-      renderTasks();
+    function updateCount() {
+      taskCount.textContent = `${taskList.children.length} Items`;
+    }
+
+    function clearFields() {
+      document.getElementById("title").value = "";
+      document.getElementById("description").value = "";
+      document.getElementById("taskDate").value = "";
+      document.getElementById("priority").value = "";
     }
   </script>
 </body>
