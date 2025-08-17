@@ -1,44 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>To-Do App</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #87CEEB;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
+    * { box-sizing: border-box; }
+    body { 
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; 
+      background: skyblue;
+      margin: 0; 
     }
-    .container {
-      background: #fff;
-      margin-top: 50px;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      width: 90%;
-      max-width: 600px;
+    .container { 
+      max-width: 760px; 
+      margin: 40px auto; 
+      background: #fff; 
+      padding: 24px; 
+      border-radius: 16px; 
+      box-shadow: 0 10px 30px rgba(0,0,0,.06); 
     }
-    h2 {
-      margin-bottom: 16px;
-    }
+    h1 { margin: 0 0 16px; font-weight: 800; }
+
     #todo-form { 
       display: grid; 
       grid-template-columns: 1fr 1fr 1fr auto; 
       gap: 10px; 
       margin-bottom: 16px; 
     }
-    #todo-form input, 
-    #todo-form select, 
-    #todo-form button { 
+    #todo-form input, #todo-form button { 
       padding: 10px 12px; 
       border: 1px solid #e5e7eb; 
-      border-radius: 8px; 
+      border-radius: 10px; 
     }
     #todo-form button { 
       background: purple; 
@@ -46,100 +37,196 @@
       border: none; 
       cursor: pointer; 
     }
-    #todo-form button:hover { opacity: .9; }
+    #todo-form button:hover { opacity: .95; }
 
-    /* Responsive Fix for Mobile */
     @media (max-width: 600px) {
       #todo-form {
         grid-template-columns: 1fr;
       }
-      #todo-form input,
-      #todo-form select,
+      #todo-form input, 
       #todo-form button {
         width: 100%;
       }
     }
+    .toolbar { display: flex; gap: 10px; margin: 12px 0 16px; }
+    .toolbar input, .toolbar select { flex: 1; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 10px; }
 
-    ul { 
-      list-style: none; 
-      padding: 0; 
-    }
-    li { 
-      background: #f9f9f9; 
-      padding: 10px; 
-      margin: 5px 0; 
+    #todo-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    .todo { display: grid; grid-template-columns: 28px 1fr auto; align-items: start; gap: 12px; padding: 14px; border: 1px solid #e5e7eb; border-radius: 12px; }
+    .todo.completed { background: #f9fafb; opacity: .9; }
+    .todo .title { font-weight: 700; }
+    .todo .meta { color: #6b7280; font-size: 13px; }
+    .todo .actions { display: flex; gap: 8px; }
+
+    .todo button { 
+      border: none; 
+      padding: 8px 10px; 
       border-radius: 8px; 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center;
+      cursor: pointer; 
+      color: white;
     }
-    .actions button {
-      margin-left: 6px;
-      padding: 6px 10px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .edit { background: green; color: white; }
-    .delete { background: red; color: white; }
+    .todo .edit-btn { background: green; }
+    .todo .edit-btn:hover { background: darkgreen; }
+    .todo .delete-btn { background: red; }
+    .todo .delete-btn:hover { background: darkred; }
+
+    .badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid #e5e7eb; }
+    .badge.overdue { border-color: #fecaca; color: #991b1b; background: #fff1f2; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>To-Do List</h2>
+    <h1>To-Do List</h1>
     <form id="todo-form">
       <input type="text" id="title" placeholder="Title" required>
       <input type="text" id="description" placeholder="Description">
-      <select id="priority">
-        <option value="Low">Low</option>
-        <option value="Medium">Medium</option>
-        <option value="High">High</option>
-      </select>
-      <button type="submit">Add Task</button>
+      <input type="date" id="dueDate">
+      <button type="submit" class="add">Add Task</button>
     </form>
+
+    <div style="display:flex;gap:10px;margin-bottom:10px;">
+      <input type="text" id="search" placeholder="Search...">
+      <select id="filter">
+        <option value="all">All</option>
+        <option value="active">Active</option>
+        <option value="completed">Completed</option>
+        <option value="overdue">Overdue</option>
+      </select>
+      <span id="count"></span>
+    </div>
     <ul id="todo-list"></ul>
   </div>
 
-  <script>
-    const form = document.getElementById("todo-form");
-    const list = document.getElementById("todo-list");
+<script>
+let todos = JSON.parse(localStorage.getItem('todos') || '[]');
 
-    form.addEventListener("submit", function(e) {
-      e.preventDefault();
+const listEl = document.getElementById('todo-list');
+const formEl = document.getElementById('todo-form');
+const titleEl = document.getElementById('title');
+const descEl = document.getElementById('description');
+const dueEl = document.getElementById('dueDate');
+const filterEl = document.getElementById('filter');
+const searchEl = document.getElementById('search');
+const countEl = document.getElementById('count');
 
-      const title = document.getElementById("title").value;
-      const desc = document.getElementById("description").value;
-      const priority = document.getElementById("priority").value;
+function saveTodos() {
+  localStorage.setItem('todos', JSON.stringify(todos));
+}
 
-      if(title.trim() === "") return;
+function isOverdue(todo) {
+  if (!todo.dueDate) return false;
+  const today = new Date();
+  const due = new Date(todo.dueDate);
+  return !todo.completed && due.setHours(0,0,0,0) < today.setHours(0,0,0,0);
+}
 
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <span><strong>${title}</strong> - ${desc} [${priority}]</span>
-        <div class="actions">
-          <button class="edit">Edit</button>
-          <button class="delete">Delete</button>
-        </div>
-      `;
+function render() {
+  const query = searchEl.value.toLowerCase();
+  const filter = filterEl.value;
 
-      // Delete task
-      li.querySelector(".delete").addEventListener("click", () => {
-        li.remove();
-      });
+  let visible = todos.filter(t =>
+    t.title.toLowerCase().includes(query) ||
+    (t.description || '').toLowerCase().includes(query)
+  );
 
-      // Edit task
-      li.querySelector(".edit").addEventListener("click", () => {
-        document.getElementById("title").value = title;
-        document.getElementById("description").value = desc;
-        document.getElementById("priority").value = priority;
-        li.remove();
-      });
+  if (filter === 'active') visible = visible.filter(t => !t.completed);
+  if (filter === 'completed') visible = visible.filter(t => t.completed);
+  if (filter === 'overdue') visible = visible.filter(isOverdue);
 
-      list.appendChild(li);
+  countEl.textContent = `${visible.length} item${visible.length !== 1 ? 's' : ''}`;
 
-      // Reset form
-      form.reset();
-    });
-  </script>
+  listEl.innerHTML = '';
+  visible.forEach(t => listEl.appendChild(renderItem(t)));
+}
+
+function renderItem(todo) {
+  const li = document.createElement('li');
+  li.className = `todo ${todo.completed ? 'completed' : ''}`;
+
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = todo.completed;
+  checkbox.addEventListener('change', () => {
+    todo.completed = !todo.completed;
+    saveTodos();
+    render();
+  });
+
+  const body = document.createElement('div');
+  const title = document.createElement('div');
+  title.className = 'title';
+  title.textContent = todo.title;
+
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  const parts = [];
+  if (todo.description) parts.push(todo.description);
+  if (todo.dueDate) parts.push(`Due: ${new Date(todo.dueDate).toLocaleDateString()}`);
+  parts.push(`Created: ${new Date(todo.createdAt).toLocaleString()}`);
+  meta.innerHTML = parts.join(' • ');
+
+  const badge = document.createElement('span');
+  if (isOverdue(todo)) { badge.className = 'badge overdue'; badge.textContent = 'Overdue'; }
+
+  body.appendChild(title);
+  body.appendChild(meta);
+  if (badge.textContent) body.appendChild(badge);
+
+  const actions = document.createElement('div');
+  actions.className = 'actions';
+
+  const editBtn = document.createElement('button');
+  editBtn.textContent = 'Edit';
+  editBtn.className = 'edit-btn';
+  editBtn.addEventListener('click', () => {
+    const newTitle = prompt('Edit title', todo.title);
+    if (newTitle === null) return;
+    const newDesc = prompt('Edit description', todo.description);
+    const newDue = prompt('Edit due date (YYYY-MM-DD)', todo.dueDate || '');
+    todo.title = newTitle;
+    todo.description = newDesc;
+    todo.dueDate = newDue;
+    saveTodos();
+    render();
+  });
+
+  const delBtn = document.createElement('button');
+  delBtn.textContent = 'Delete';
+  delBtn.className = 'delete-btn';
+  delBtn.addEventListener('click', () => {
+    todos = todos.filter(t => t !== todo);
+    saveTodos();
+    render();
+  });
+
+  actions.appendChild(editBtn);
+  actions.appendChild(delBtn);
+
+  li.appendChild(checkbox);
+  li.appendChild(body);
+  li.appendChild(actions);
+  return li;
+}
+
+formEl.addEventListener('submit', e => {
+  e.preventDefault();
+  todos.push({
+    id: Date.now(),
+    title: titleEl.value,
+    description: descEl.value,
+    dueDate: dueEl.value || null,
+    completed: false,
+    createdAt: new Date().toISOString()
+  });
+  saveTodos();
+  formEl.reset();
+  render();
+});
+
+searchEl.addEventListener('input', render);
+filterEl.addEventListener('change', render);
+
+render();
+</script>
 </body>
 </html>
