@@ -7,194 +7,139 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: skyblue;
+      background-color: #87CEEB;
+      margin: 0;
+      padding: 0;
       display: flex;
       justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
+      align-items: flex-start;
+      min-height: 100vh;
     }
-
     .container {
       background: #fff;
+      margin-top: 50px;
       padding: 20px;
       border-radius: 12px;
-      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       width: 90%;
-      max-width: 500px;
+      max-width: 600px;
     }
-
     h2 {
-      margin-top: 0;
-      text-align: center;
+      margin-bottom: 16px;
+    }
+    #todo-form { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr 1fr auto; 
+      gap: 10px; 
+      margin-bottom: 16px; 
+    }
+    #todo-form input, 
+    #todo-form select, 
+    #todo-form button { 
+      padding: 10px 12px; 
+      border: 1px solid #e5e7eb; 
+      border-radius: 8px; 
+    }
+    #todo-form button { 
+      background: purple; 
+      color: #fff; 
+      border: none; 
+      cursor: pointer; 
+    }
+    #todo-form button:hover { opacity: .9; }
+
+    /* Responsive Fix for Mobile */
+    @media (max-width: 600px) {
+      #todo-form {
+        grid-template-columns: 1fr;
+      }
+      #todo-form input,
+      #todo-form select,
+      #todo-form button {
+        width: 100%;
+      }
     }
 
-    .form {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 15px;
+    ul { 
+      list-style: none; 
+      padding: 0; 
     }
-
-    .form input, 
-    .form select {
-      flex: 1;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-
-    #addBtn {
-      background-color: purple;
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    #addBtn:hover {
-      background-color: darkviolet;
-    }
-
-    .task-controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .task-controls input, .task-controls select {
-      padding: 6px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-
-    #taskList {
-      list-style: none;
-      padding: 0;
-    }
-
-    #taskList li {
-      background: #f9f9f9;
-      padding: 10px;
-      margin: 6px 0;
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
+    li { 
+      background: #f9f9f9; 
+      padding: 10px; 
+      margin: 5px 0; 
+      border-radius: 8px; 
+      display: flex; 
+      justify-content: space-between; 
       align-items: center;
     }
-
-    button.edit {
-      background-color: green;
-      color: white;
+    .actions button {
+      margin-left: 6px;
+      padding: 6px 10px;
       border: none;
-      padding: 5px 8px;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
     }
-
-    button.delete {
-      background-color: red;
-      color: white;
-      border: none;
-      padding: 5px 8px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
+    .edit { background: green; color: white; }
+    .delete { background: red; color: white; }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>To-Do List</h2>
-    <div class="form">
-      <input type="text" id="title" placeholder="Title">
+    <form id="todo-form">
+      <input type="text" id="title" placeholder="Title" required>
       <input type="text" id="description" placeholder="Description">
-      <input type="date" id="taskDate">
       <select id="priority">
-        <option value="" disabled selected>Priority</option>
-        <option value="High">High</option>
-        <option value="Medium">Medium</option>
         <option value="Low">Low</option>
-      </select>
-      <button id="addBtn">Add Task</button>
-    </div>
-
-    <div class="task-controls">
-      <input type="text" id="search" placeholder="Search...">
-      <select id="filter">
-        <option value="All">All</option>
-        <option value="High">High</option>
         <option value="Medium">Medium</option>
-        <option value="Low">Low</option>
+        <option value="High">High</option>
       </select>
-      <span id="taskCount">0 Items</span>
-    </div>
-
-    <ul id="taskList"></ul>
+      <button type="submit">Add Task</button>
+    </form>
+    <ul id="todo-list"></ul>
   </div>
 
   <script>
-    const taskList = document.getElementById("taskList");
-    const taskCount = document.getElementById("taskCount");
+    const form = document.getElementById("todo-form");
+    const list = document.getElementById("todo-list");
 
-    document.getElementById("addBtn").addEventListener("click", function () {
+    form.addEventListener("submit", function(e) {
+      e.preventDefault();
+
       const title = document.getElementById("title").value;
-      const description = document.getElementById("description").value;
-      const date = document.getElementById("taskDate").value;
+      const desc = document.getElementById("description").value;
       const priority = document.getElementById("priority").value;
 
-      if (title && description && date && priority) {
-        const task = { title, description, date, priority };
-        addTaskToList(task);
-        updateCount();
-        clearFields();
-      } else {
-        alert("Please fill all fields");
-      }
-    });
+      if(title.trim() === "") return;
 
-    function addTaskToList(task) {
       const li = document.createElement("li");
-
       li.innerHTML = `
-        <div>
-          <strong>${task.title}</strong> - ${task.description} 
-          <br><small>${task.date} | Priority: ${task.priority}</small>
-        </div>
-        <div>
+        <span><strong>${title}</strong> - ${desc} [${priority}]</span>
+        <div class="actions">
           <button class="edit">Edit</button>
           <button class="delete">Delete</button>
         </div>
       `;
 
+      // Delete task
       li.querySelector(".delete").addEventListener("click", () => {
         li.remove();
-        updateCount();
       });
 
+      // Edit task
       li.querySelector(".edit").addEventListener("click", () => {
-        document.getElementById("title").value = task.title;
-        document.getElementById("description").value = task.description;
-        document.getElementById("taskDate").value = task.date;
-        document.getElementById("priority").value = task.priority;
+        document.getElementById("title").value = title;
+        document.getElementById("description").value = desc;
+        document.getElementById("priority").value = priority;
         li.remove();
-        updateCount();
       });
 
-      taskList.appendChild(li);
-    }
+      list.appendChild(li);
 
-    function updateCount() {
-      taskCount.textContent = `${taskList.children.length} Items`;
-    }
-
-    function clearFields() {
-      document.getElementById("title").value = "";
-      document.getElementById("description").value = "";
-      document.getElementById("taskDate").value = "";
-      document.getElementById("priority").value = "";
-    }
+      // Reset form
+      form.reset();
+    });
   </script>
 </body>
 </html>
